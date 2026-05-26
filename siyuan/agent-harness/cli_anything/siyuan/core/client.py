@@ -115,7 +115,10 @@ class SiYuanClient:
         self._post("/api/notebook/closeNotebook", {"notebook": notebook_id})
 
     def create_notebook(self, name: str) -> dict[str, Any]:
-        return self._post("/api/notebook/createNotebook", {"name": name})
+        data = self._post("/api/notebook/createNotebook", {"name": name})
+        if isinstance(data, dict) and "notebook" in data:
+            return data["notebook"]
+        return data
 
     def remove_notebook(self, notebook_id: str) -> None:
         self._post("/api/notebook/removeNotebook", {"notebook": notebook_id})

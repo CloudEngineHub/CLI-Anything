@@ -526,6 +526,8 @@ def block():
 @click.pass_obj
 def block_insert(ctx: SiYuanContext, data: str, previous: str, parent: str, data_type: str):
     """Insert a block."""
+    if not parent and not previous:
+        raise click.UsageError("Either --parent or --previous is required for block insert")
     result = ctx.client.insert_block(data_type, data, parent_id=parent, previous_id=previous)
     if ctx.json_output:
         click.echo(json.dumps(result, ensure_ascii=False))
