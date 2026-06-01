@@ -266,15 +266,18 @@ class SiYuanClient:
     def search_blocks(self, query: str) -> list[dict[str, Any]]:
         return self._post("/api/search/fullTextSearchBlock", {"query": query})
 
-    def search_tag(self, tag: str = "") -> list[dict[str, Any]]:
-        return self._post("/api/search/searchTag", {"tag": tag})
+    def search_tag(self, tag: str = "") -> list[str]:
+        """Search tags. Returns list of tag name strings."""
+        data = self._post("/api/search/searchTag", {"k": tag})
+        if isinstance(data, dict):
+            return data.get("tags", [])
+        return data or []
 
-    def find_replace(self, keyword: str, replacement: str, notebook_id: str = "", path: str = "", max_count: int = 0) -> int:
-        data = self._post("/api/search/findReplace", {
-            "keyword": keyword, "replacement": replacement,
-            "notebookID": notebook_id, "path": path, "maxCount": max_count,
+    def find_replace(self, keyword: str, replacement: str, ids: list[str]) -> None:
+        """Search and replace text in blocks by ID."""
+        self._post("/api/search/findReplace", {
+            "k": keyword, "r": replacement, "ids": ids,
         })
-        return data.get("count", 0)
 
     # ── Export API ─────────────────────────────────────────────────────
 
