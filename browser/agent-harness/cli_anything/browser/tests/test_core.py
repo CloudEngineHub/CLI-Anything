@@ -386,3 +386,56 @@ class TestDaemonMode:
             result = fs.list_elements(sess)
 
             mock_ls.assert_called_once_with("/", use_daemon=False, session=sess)
+
+
+# ── CLI-layer error surfacing (Codex P2 R4) ─────────────────────────
+
+
+class TestCLIErrorSurfacing:
+    """The non-JSON branches of `fs ls` and `fs grep` previously fell
+    straight into ``result.get("entries"/"matches", [])`` and surfaced
+    "No elements at …" / "No matches for …" for DOMShell errors. Codex
+    P2 R4 on PR #308 commit 5790651 required surfacing the error
+    message instead.
+    """
+
+    def _invoke(self, mod_target, error_result, argv):
+        """Mock the dependency check + the fs_mod target, invoke CLI."""
+        from click.testing import CliRunner
+        from cli_anything.browser.browser_cli import cli
+
+        with patch(
+            "cli_anything.browser.browser_cli.backend.is_available",
+            return_value=(True, "ok"),
+        ), patch(
+            f"cli_anything.browser.browser_cli.fs_mod.{mod_target}",
+            return_value=error_result,
+        ):
+            return CliRunner().invoke(cli, argv)
+
+    def test_fs_ls_surfaces_error_in_non_json_output(self):
+        """`fs ls` on a path DOMShell errors against should display the
+        error message — not the misleading "No elements at <path>".
+        """
+        error_result = {
+            "error": "ls: nonexistent: No such directory",
+            "output": "ls: nonexistent: No such directory",
+        }
+        result = self._invoke(
+            "list_elements", error_result, ["fs", "ls", "/nonexistent"],
+        )
+        # click.echo(err=True) goes to stderr; CliRunner captures both.
+        assert "No such directory" in result.output
+        assert "No elements" not in result.output
+
+    def test_fs_grep_surfaces_error_in_non_json_output(self):
+        """Mirror for `fs grep`. Codex P2 R4 regression test."""
+        error_result = {
+            "error": "cd: /nonexistent: No such directory",
+            "output": "cd: /nonexistent: No such directory",
+        }
+        result = self._invoke(
+            "grep_elements", error_result, ["fs", "grep", "Login", "/nonexistent"],
+        )
+        assert "No such directory" in result.output
+        assert "No matches" not in result.output

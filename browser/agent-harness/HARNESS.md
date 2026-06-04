@@ -38,9 +38,15 @@ DOMShell is an npm package that exposes Chrome's Accessibility Tree via MCP:
 ### Installation
 
 **Requires `@apireno/domshell` 2.0.2 or newer.** The harness uses
-`group_id="shared"` and `group_id="new"` keywords introduced in 2.0.2 to
-declare lane intent explicitly (silences the deprecation warning that 2.0.2
-added for omitted `group_id`; will become a hard error in DOMShell 3.0.0).
+`group_id="new"` to declare lane intent explicitly on the first call of
+each session and reuses the captured lane id on subsequent calls (silences
+the deprecation warning that 2.0.2 added for omitted `group_id`; will
+become a hard error in DOMShell 3.0.0). For direct daemon-mode callers
+without a harness `Session`, the same scheme runs at module level — the
+first call captures a lane id into `_daemon_lane_id` and subsequent calls
+reuse it, preserving browser state across daemon-mode no-session calls
+(see `domshell_backend.py`'s `_daemon_lane_id` declaration for the
+stale-lane failure mode).
 
 ```bash
 npx @apireno/domshell --version   # should report 2.0.2 or higher

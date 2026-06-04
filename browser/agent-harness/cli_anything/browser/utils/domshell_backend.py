@@ -24,6 +24,7 @@ import re
 import shlex
 import subprocess
 import shutil
+import threading
 from typing import Any, Optional
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -80,6 +81,13 @@ _daemon_client_context: Optional[Any] = None  # Store stdio_client context manag
 # pointing to a closed group. Restart the daemon (or reset this attr)
 # to clear.
 _daemon_lane_id: Optional[str] = None
+
+# Synchronizes the first-call capture of _daemon_lane_id. Concurrent
+# callers of _call_execute in daemon mode without a session would
+# otherwise race on the `is None` check below. Lock spans only the
+# check + assignment (microsecond contention), not the MCP call.
+# (Copilot R4 on commit 5790651.)
+_daemon_lane_lock = threading.Lock()
 
 
 def _check_npx() -> bool:
@@ -553,10 +561,14 @@ async def _call_execute(
             # Daemon-level capture on first daemon-no-session call so
             # subsequent calls reuse the same lane regardless of whether
             # the daemon stays alive or we fall back to fresh spawns.
-            if use_daemon and session is None and _daemon_lane_id is None:
-                captured = _extract_lane_id(result)
-                if captured:
-                    _daemon_lane_id = captured
+            # `is None` check moved INSIDE the lock to fix the
+            # test-and-set race between concurrent callers.
+            if use_daemon and session is None:
+                with _daemon_lane_lock:
+                    if _daemon_lane_id is None:
+                        captured = _extract_lane_id(result)
+                        if captured:
+                            _daemon_lane_id = captured
             return result
         except Exception as e:
             # Daemon died — log diagnosability and fall back to spawning
@@ -564,6 +576,7 @@ async def _call_execute(
             # failure mode invisible in user reports.
             log.warning(
                 "DOMShell daemon call failed, respawning per-command: %s", e,
+                exc_info=True,
             )
             await _stop_daemon()
 
@@ -582,11 +595,14 @@ async def _call_execute(
                 )
                 _capture_lane(session, result)
                 # See daemon-path capture above for rationale — same
-                # logic applies on the fresh-spawn fall-back path.
-                if use_daemon and session is None and _daemon_lane_id is None:
-                    captured = _extract_lane_id(result)
-                    if captured:
-                        _daemon_lane_id = captured
+                # logic applies on the fresh-spawn fall-back path,
+                # including the lock-guarded test-and-set.
+                if use_daemon and session is None:
+                    with _daemon_lane_lock:
+                        if _daemon_lane_id is None:
+                            captured = _extract_lane_id(result)
+                            if captured:
+                                _daemon_lane_id = captured
                 return result
     except Exception as e:
         raise RuntimeError(
