@@ -1,6 +1,7 @@
 ---
 name: cli-anything
 description: Use when the user wants Reasonix to build, refine, test, or validate a CLI-Anything harness for a GUI application or source repository. Adapts the CLI-Anything methodology to Reasonix without changing the generated Python harness format.
+runAs: subagent
 ---
 
 # CLI-Anything for Reasonix
