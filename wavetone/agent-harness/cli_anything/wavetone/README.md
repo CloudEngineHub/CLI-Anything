@@ -56,6 +56,5 @@ without WaveTone can still run the CLI-only suite. To opt into the real Windows
 smoke, set `CLI_ANYTHING_WAVETONE_REAL_BACKEND=1` plus `WAVETONE_EXE` or
 `WAVETONE_HOME` pointing at a WaveTone 2.61 extraction with `wavetone.exe` and
 the bundled `data` directory. E2E subprocess tests run the in-tree
-`python -m cli_anything.wavetone.wavetone_cli` module by default; set
-`CLI_ANYTHING_FORCE_INSTALLED=1` only when intentionally testing an installed
-entry point.
+`python -m cli_anything.wavetone.wavetone_cli` module by default and do not
+silently prefer an installed `cli-anything-wavetone` from `PATH`.

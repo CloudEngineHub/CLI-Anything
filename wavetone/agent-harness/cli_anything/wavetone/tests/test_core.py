@@ -99,6 +99,30 @@ def test_cli_analysis_preserves_omitted_boolean_flags(tmp_path: Path) -> None:
     assert loaded["analysis"]["skip_analysis_dialog"] is True
 
 
+def test_cli_attach_wfd_requires_existing_wfd_file(tmp_path: Path) -> None:
+    wav = make_wav(tmp_path / "tone.wav")
+    project_path = save_project(create_project(wav), tmp_path / "tone.wt.json")
+
+    missing = tmp_path / "missing.wfd"
+    result = CliRunner().invoke(cli, ["--project", str(project_path), "project", "attach-wfd", str(missing)])
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
+
+    wrong_suffix = tmp_path / "analysis.txt"
+    wrong_suffix.write_text("wfd", encoding="utf-8")
+    result = CliRunner().invoke(cli, ["--project", str(project_path), "project", "attach-wfd", str(wrong_suffix)])
+    assert result.exit_code == 1
+    assert ".wfd" in result.output
+
+    wfd_path = tmp_path / "analysis.wfd"
+    wfd_path.write_text("wfd", encoding="utf-8")
+    result = CliRunner().invoke(cli, ["--project", str(project_path), "--json", "project", "attach-wfd", str(wfd_path)])
+
+    assert result.exit_code == 0, result.output
+    data = json.loads(result.output)
+    assert data["wfd_path"] == str(wfd_path.resolve())
+
+
 def test_rejects_non_finite_project_numbers(tmp_path: Path) -> None:
     wav = make_wav(tmp_path / "tone.wav")
     project = create_project(wav)

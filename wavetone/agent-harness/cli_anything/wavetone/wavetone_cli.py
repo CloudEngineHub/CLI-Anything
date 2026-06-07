@@ -227,12 +227,14 @@ def project_analysis(
 
 
 @project_group.command("attach-wfd")
-@click.argument("wfd_path", type=click.Path(dir_okay=False))
+@click.argument("wfd_path", type=click.Path(exists=True, dir_okay=False))
 @click.argument("project_path", required=False, type=click.Path(exists=True, dir_okay=False))
 @click.pass_context
 def project_attach_wfd(ctx: click.Context, wfd_path: str, project_path: str | None) -> None:
     """Attach a WFD analysis file saved by WaveTone."""
     try:
+        if Path(wfd_path).suffix.lower() != ".wfd":
+            raise ValueError("WFD path must use the .wfd extension")
         project, path = load_ctx_project(ctx, project_path)
         set_wfd_path(project, wfd_path)
         save_project(project, path)

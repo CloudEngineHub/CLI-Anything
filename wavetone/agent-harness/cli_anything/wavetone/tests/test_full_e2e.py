@@ -15,11 +15,10 @@ from cli_anything.wavetone.utils import wavetone_backend
 REAL_BACKEND_ENV = "CLI_ANYTHING_WAVETONE_REAL_BACKEND"
 
 
-def _resolve_cli(name: str) -> list[str]:
+def _resolve_cli(name: str, force_installed: bool = False) -> list[str]:
     """Run the in-tree module by default; installed entry points are opt-in."""
-    force = os.environ.get("CLI_ANYTHING_FORCE_INSTALLED", "").strip() == "1"
     module = "cli_anything.wavetone.wavetone_cli"
-    if not force:
+    if not force_installed:
         print(f"[_resolve_cli] Using source module: {sys.executable} -m {module}")
         return [sys.executable, "-m", module]
 
@@ -66,17 +65,21 @@ def test_real_backend_requires_explicit_opt_in(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_resolve_cli_defaults_to_source_module(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("CLI_ANYTHING_FORCE_INSTALLED", raising=False)
-    monkeypatch.setattr(shutil, "which", lambda name: "C:/foreign/cli-anything-wavetone.exe")
+    monkeypatch.setenv("CLI_ANYTHING_FORCE_INSTALLED", "1")
+    monkeypatch.setattr(shutil, "which", lambda name: pytest.fail("default resolver should not inspect PATH"))
 
     assert _resolve_cli("cli-anything-wavetone") == [sys.executable, "-m", "cli_anything.wavetone.wavetone_cli"]
 
 
-class TestCLISubprocess:
-    CLI_BASE = _resolve_cli("cli-anything-wavetone")
+def test_resolve_cli_uses_installed_only_when_requested(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda name: "C:/installed/cli-anything-wavetone.exe")
 
+    assert _resolve_cli("cli-anything-wavetone", force_installed=True) == ["C:/installed/cli-anything-wavetone.exe"]
+
+
+class TestCLISubprocess:
     def _run(self, args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(self.CLI_BASE + args, capture_output=True, text=True, check=check)
+        return subprocess.run(_resolve_cli("cli-anything-wavetone") + args, capture_output=True, text=True, check=check)
 
     def test_help(self) -> None:
         result = self._run(["--help"])
@@ -115,10 +118,8 @@ class TestCLISubprocess:
 
 @pytest.mark.skipif(not _REAL_BACKEND_READY, reason=_REAL_BACKEND_SKIP_REASON)
 class TestRealWaveToneBackend:
-    CLI_BASE = _resolve_cli("cli-anything-wavetone")
-
     def _run(self, args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(self.CLI_BASE + args, capture_output=True, text=True, check=check)
+        return subprocess.run(_resolve_cli("cli-anything-wavetone") + args, capture_output=True, text=True, check=check)
 
     def test_doctor_real_backend(self) -> None:
         result = self._run(["--json", "wavetone", "doctor"])

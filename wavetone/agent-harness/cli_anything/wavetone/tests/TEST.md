@@ -2,9 +2,9 @@
 
 ## Test Inventory Plan
 
-- `test_core.py`: 23 unit tests for project manifests, audio probing, session logs,
+- `test_core.py`: 24 unit tests for project manifests, audio probing, session logs,
   and backend discovery.
-- `test_full_e2e.py`: 7 tests covering default real-backend opt-in gating,
+- `test_full_e2e.py`: 8 tests covering default real-backend opt-in gating,
   source-module subprocess resolution, CLI workflows, and real WaveTone launch
   smoke coverage.
 
@@ -17,6 +17,7 @@
 - Add labels in sorted time order.
 - Set tempo and analysis options.
 - Preserve omitted CLI boolean analysis flags as tri-state values.
+- Require attached WFD analysis files to exist and use the `.wfd` suffix.
 - Reject non-finite numeric project values before JSON serialization.
 - Probe a generated WAV file with the Python stdlib.
 - Fall back to stat metadata for malformed WAV files.
@@ -48,7 +49,8 @@ Operations:
 
 1. Generate a real WAV fixture.
 2. Resolve the in-tree `python -m cli_anything.wavetone.wavetone_cli` module by
-   default, even if an installed `cli-anything-wavetone` exists in `PATH`.
+   default, even if an installed `cli-anything-wavetone` exists in `PATH` or
+   `CLI_ANYTHING_FORCE_INSTALLED` is set externally.
 3. Run `cli-anything-wavetone --json project new`.
 4. Run `project set-tempo`.
 5. Run `project add-label`.
@@ -86,7 +88,7 @@ Default command:
 
 ```bash
 $env:PATH = "$env:APPDATA\Python\Python313\Scripts;$env:PATH"
-Remove-Item Env:CLI_ANYTHING_FORCE_INSTALLED -ErrorAction SilentlyContinue
+$env:CLI_ANYTHING_FORCE_INSTALLED = "1"
 Remove-Item Env:CLI_ANYTHING_WAVETONE_REAL_BACKEND -ErrorAction SilentlyContinue
 Remove-Item Env:WAVETONE_EXE -ErrorAction SilentlyContinue
 Remove-Item Env:WAVETONE_HOME -ErrorAction SilentlyContinue
@@ -96,7 +98,7 @@ python -m pytest cli_anything\wavetone\tests\ -v -s
 Default result:
 
 ```text
-collected 30 items
+collected 32 items
 
 cli_anything/wavetone/tests/test_core.py::test_create_project_manifest PASSED
 cli_anything/wavetone/tests/test_core.py::test_rejects_unsupported_audio PASSED
@@ -104,6 +106,7 @@ cli_anything/wavetone/tests/test_core.py::test_save_load_project_roundtrip PASSE
 cli_anything/wavetone/tests/test_core.py::test_labels_are_sorted PASSED
 cli_anything/wavetone/tests/test_core.py::test_update_analysis_settings PASSED
 cli_anything/wavetone/tests/test_core.py::test_cli_analysis_preserves_omitted_boolean_flags PASSED
+cli_anything/wavetone/tests/test_core.py::test_cli_attach_wfd_requires_existing_wfd_file PASSED
 cli_anything/wavetone/tests/test_core.py::test_rejects_non_finite_project_numbers PASSED
 cli_anything/wavetone/tests/test_core.py::test_load_project_rejects_non_object_json PASSED
 cli_anything/wavetone/tests/test_core.py::test_probe_wav_metadata PASSED
@@ -123,20 +126,21 @@ cli_anything/wavetone/tests/test_core.py::test_repl_skin_uses_wavetone_branding_
 cli_anything/wavetone/tests/test_core.py::test_repl_reports_click_exit_without_unexpected_error PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::test_real_backend_requires_explicit_opt_in PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::test_resolve_cli_defaults_to_source_module PASSED
+cli_anything/wavetone/tests/test_full_e2e.py::test_resolve_cli_uses_installed_only_when_requested PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::TestCLISubprocess::test_help PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::TestCLISubprocess::test_project_audio_workflow_json PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::TestCLISubprocess::test_formats_json PASSED
 cli_anything/wavetone/tests/test_full_e2e.py::TestRealWaveToneBackend::test_doctor_real_backend SKIPPED
 cli_anything/wavetone/tests/test_full_e2e.py::TestRealWaveToneBackend::test_launch_real_backend_with_wav SKIPPED
 
-28 passed, 2 skipped in 2.10s
+30 passed, 2 skipped in 1.44s
 ```
 
 Real backend opt-in command:
 
 ```bash
 $env:PATH = "$env:APPDATA\Python\Python313\Scripts;$env:PATH"
-Remove-Item Env:CLI_ANYTHING_FORCE_INSTALLED -ErrorAction SilentlyContinue
+$env:CLI_ANYTHING_FORCE_INSTALLED = "1"
 $env:CLI_ANYTHING_WAVETONE_REAL_BACKEND = "1"
 $env:WAVETONE_HOME = "C:\Users\Hp\Desktop\wavetone2.6.1"
 Remove-Item Env:WAVETONE_EXE -ErrorAction SilentlyContinue
@@ -146,22 +150,23 @@ python -m pytest cli_anything\wavetone\tests\ -v -s
 Real backend result:
 
 ```text
-30 passed in 3.44s
+32 passed in 3.03s
 ```
 
 ## Coverage Notes
 
 - Unit tests cover manifest creation, validation, persistence, labels, tempo,
   analysis settings, CLI analysis flag tri-state behavior, finite numeric
-  validation, project JSON schema validation, audio probing, malformed WAV
-  fallback, session logs, session schema and payload validation, backend
-  discovery, backend data artifact validation, ffprobe argument construction,
-  ffprobe metadata parsing, inherited CLI project and JSON context, failed
-  launch smoke reporting, launch runtime error reporting, Windows launch gating,
-  REPL Windows path splitting, REPL branding and local skill path display, and
-  REPL Click exit handling.
+  validation, WFD attachment validation, project JSON schema validation, audio
+  probing, malformed WAV fallback, session logs, session schema and payload
+  validation, backend discovery, backend data artifact validation, ffprobe
+  argument construction, ffprobe metadata parsing, inherited CLI project and
+  JSON context, failed launch smoke reporting, launch runtime error reporting,
+  Windows launch gating, REPL Windows path splitting, REPL branding and local
+  skill path display, and REPL Click exit handling.
 - CLI subprocess tests resolve and use the in-tree
-  `python -m cli_anything.wavetone.wavetone_cli` module by default.
+  `python -m cli_anything.wavetone.wavetone_cli` module by default, regardless
+  of ambient `CLI_ANYTHING_FORCE_INSTALLED`.
 - Real backend coverage launches `C:\Users\Hp\Desktop\wavetone2.6.1\wavetone.exe`
   with a generated WAV and terminates it after a short wait.
 - Real backend tests are skipped by default unless
