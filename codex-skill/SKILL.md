@@ -38,7 +38,7 @@ skill so a normal Codex installation is self-contained.
 | `scripts/repl_skin.py` | Copy into generated harnesses as `utils/repl_skin.py` |
 | `scripts/preview_bundle.py` | Copy into preview-capable harnesses as `utils/preview_bundle.py` |
 | `scripts/skill_generator.py` | Generate canonical and packaged CLI skills |
-| `assets/SKILL.md.template` | Skill generation template |
+| `scripts/templates/SKILL.md.template` | Skill generation template used by `skill_generator.py` |
 | `references/docs/PREVIEW_PROTOCOL.md` | Shared preview bundle protocol |
 
 When reading vendored documents, apply these path remappings instead of resolving
@@ -50,7 +50,7 @@ plugin paths against the current working directory:
 | `cli-anything-plugin/repl_skin.py` | `scripts/repl_skin.py` |
 | `cli-anything-plugin/preview_bundle.py` | `scripts/preview_bundle.py` |
 | `cli-anything-plugin/skill_generator.py` | `scripts/skill_generator.py` |
-| `templates/SKILL.md.template` | `assets/SKILL.md.template` |
+| `templates/SKILL.md.template` | `scripts/templates/SKILL.md.template` |
 | `docs/PREVIEW_PROTOCOL.md` | `references/docs/PREVIEW_PROTOCOL.md` |
 
 ## Inputs

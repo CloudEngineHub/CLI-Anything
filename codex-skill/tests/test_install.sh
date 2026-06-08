@@ -9,6 +9,7 @@ PLUGIN_DIR="${REPO_ROOT}/cli-anything-plugin"
 TMP_DIR="$(mktemp -d)"
 CODEX_HOME="${TMP_DIR}/codex-home"
 INSTALLED_DIR="${CODEX_HOME}/skills/cli-anything"
+STALE_STAGING_DIR="${CODEX_HOME}/skills/.cli-anything.tmp.stale"
 
 cleanup() {
   rm -rf "${TMP_DIR}"
@@ -32,9 +33,16 @@ assert_tree_same() {
   diff -qr "$1" "$2" >/dev/null || fail "directories differ: $1 $2"
 }
 
+mkdir -p "${STALE_STAGING_DIR}/codex-skill"
+echo "left over from an interrupted install" > "${STALE_STAGING_DIR}/codex-skill/stale.txt"
+
 CODEX_HOME="${CODEX_HOME}" bash "${SKILL_DIR}/scripts/install.sh"
 
 assert_file "${INSTALLED_DIR}/SKILL.md"
+[[ -d "${STALE_STAGING_DIR}" ]] ||
+  fail "installer reused or removed the stale staging directory"
+[[ ! -d "${INSTALLED_DIR}/codex-skill" ]] ||
+  fail "installer created a nested codex-skill directory"
 assert_file "${INSTALLED_DIR}/references/HARNESS.md"
 assert_file "${INSTALLED_DIR}/references/commands/cli-anything.md"
 assert_file "${INSTALLED_DIR}/references/commands/refine.md"
@@ -47,7 +55,7 @@ assert_file "${INSTALLED_DIR}/references/guides/preview-methodology.md"
 assert_file "${INSTALLED_DIR}/scripts/repl_skin.py"
 assert_file "${INSTALLED_DIR}/scripts/preview_bundle.py"
 assert_file "${INSTALLED_DIR}/scripts/skill_generator.py"
-assert_file "${INSTALLED_DIR}/assets/SKILL.md.template"
+assert_file "${INSTALLED_DIR}/scripts/templates/SKILL.md.template"
 assert_file "${INSTALLED_DIR}/references/docs/PREVIEW_PROTOCOL.md"
 
 assert_same "${PLUGIN_DIR}/HARNESS.md" "${INSTALLED_DIR}/references/HARNESS.md"
@@ -57,7 +65,7 @@ assert_same "${PLUGIN_DIR}/skill_generator.py" "${INSTALLED_DIR}/scripts/skill_g
 assert_same "${REPO_ROOT}/docs/PREVIEW_PROTOCOL.md" "${INSTALLED_DIR}/references/docs/PREVIEW_PROTOCOL.md"
 assert_tree_same "${PLUGIN_DIR}/commands" "${INSTALLED_DIR}/references/commands"
 assert_tree_same "${PLUGIN_DIR}/guides" "${INSTALLED_DIR}/references/guides"
-assert_tree_same "${PLUGIN_DIR}/templates" "${INSTALLED_DIR}/assets"
+assert_tree_same "${PLUGIN_DIR}/templates" "${INSTALLED_DIR}/scripts/templates"
 
 python3 -m py_compile \
   "${INSTALLED_DIR}/scripts/repl_skin.py" \

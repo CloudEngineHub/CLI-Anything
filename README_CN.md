@@ -278,7 +278,7 @@ bash CLI-Anything/codex-skill/scripts/install.sh
 ```
 
 脚本会把 skill 安装到 `$CODEX_HOME/skills/cli-anything`；如果没有设置 `CODEX_HOME`，则默认安装到 `~/.codex/skills/cli-anything`。
-安装器还会把权威版本的 `HARNESS.md`、命令规范、按需指南、可复用辅助脚本、skill 模板和 preview 协议复制到已安装 skill 的 `references/`、`scripts/` 和 `assets/` 目录。这样 Codex skill 可以独立工作，同时仍以 `cli-anything-plugin/` 作为唯一权威来源。
+安装器还会把权威版本的 `HARNESS.md`、命令规范、按需指南、可复用辅助脚本、skill 模板和 preview 协议复制到已安装 skill 的 `references/` 和 `scripts/` 目录。这样 Codex skill 可以独立工作，同时仍以 `cli-anything-plugin/` 作为唯一权威来源。
 
 安装后重启 Codex，让它重新发现这个 skill。
 

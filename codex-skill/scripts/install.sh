@@ -9,7 +9,7 @@ PLUGIN_DIR="${REPO_ROOT}/cli-anything-plugin"
 PREVIEW_PROTOCOL="${REPO_ROOT}/docs/PREVIEW_PROTOCOL.md"
 DEST_ROOT="${CODEX_HOME:-$HOME/.codex}/skills"
 DEST_DIR="${DEST_ROOT}/cli-anything"
-STAGING_DIR="${DEST_ROOT}/.cli-anything.tmp.$$"
+STAGING_DIR=""
 
 if [[ ! -f "${PLUGIN_DIR}/HARNESS.md" ]]; then
   echo "Cannot find canonical CLI-Anything resources at: ${PLUGIN_DIR}" >&2
@@ -32,17 +32,19 @@ if [[ -e "${DEST_DIR}" ]]; then
 fi
 
 cleanup() {
-  rm -rf "${STAGING_DIR}"
+  if [[ -n "${STAGING_DIR}" && -d "${STAGING_DIR}" ]]; then
+    rm -rf "${STAGING_DIR}"
+  fi
 }
 trap cleanup EXIT
 
-cp -R "${SKILL_DIR}" "${STAGING_DIR}"
+STAGING_DIR="$(mktemp -d "${DEST_ROOT}/.cli-anything.tmp.XXXXXX")"
+cp -R "${SKILL_DIR}/." "${STAGING_DIR}/"
 mkdir -p \
-  "${STAGING_DIR}/assets" \
   "${STAGING_DIR}/references/commands" \
   "${STAGING_DIR}/references/docs" \
   "${STAGING_DIR}/references/guides" \
-  "${STAGING_DIR}/scripts"
+  "${STAGING_DIR}/scripts/templates"
 
 cp "${PLUGIN_DIR}/HARNESS.md" "${STAGING_DIR}/references/HARNESS.md"
 cp "${PLUGIN_DIR}/commands/"*.md "${STAGING_DIR}/references/commands/"
@@ -50,7 +52,7 @@ cp "${PLUGIN_DIR}/guides/"*.md "${STAGING_DIR}/references/guides/"
 cp "${PLUGIN_DIR}/repl_skin.py" "${STAGING_DIR}/scripts/repl_skin.py"
 cp "${PLUGIN_DIR}/preview_bundle.py" "${STAGING_DIR}/scripts/preview_bundle.py"
 cp "${PLUGIN_DIR}/skill_generator.py" "${STAGING_DIR}/scripts/skill_generator.py"
-cp "${PLUGIN_DIR}/templates/"* "${STAGING_DIR}/assets/"
+cp "${PLUGIN_DIR}/templates/"* "${STAGING_DIR}/scripts/templates/"
 cp "${PREVIEW_PROTOCOL}" "${STAGING_DIR}/references/docs/PREVIEW_PROTOCOL.md"
 
 mv "${STAGING_DIR}" "${DEST_DIR}"

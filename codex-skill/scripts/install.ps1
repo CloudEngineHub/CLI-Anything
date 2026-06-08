@@ -16,7 +16,7 @@ $codexHome = if ($env:CODEX_HOME) {
 
 $destRoot = Join-Path $codexHome "skills"
 $destDir = Join-Path $destRoot "cli-anything"
-$stagingDir = Join-Path $destRoot ".cli-anything.tmp.$PID"
+$stagingDir = $null
 
 if (-not (Test-Path (Join-Path $pluginDir "HARNESS.md"))) {
     throw "Cannot find canonical CLI-Anything resources at: $pluginDir`nRun this installer from a full CLI-Anything repository checkout."
@@ -33,16 +33,18 @@ if (Test-Path $destDir) {
 }
 
 try {
-    Copy-Item -Path $skillDir -Destination $stagingDir -Recurse
+    $stagingDir = Join-Path $destRoot (".cli-anything.tmp." + [System.Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $stagingDir | Out-Null
+    Get-ChildItem -LiteralPath $skillDir -Force | Copy-Item -Destination $stagingDir -Recurse -Force
 
-    $assetDir = Join-Path $stagingDir "assets"
     $referenceDir = Join-Path $stagingDir "references"
     $referenceCommands = Join-Path $referenceDir "commands"
     $referenceDocs = Join-Path $referenceDir "docs"
     $referenceGuides = Join-Path $referenceDir "guides"
     $resourceScripts = Join-Path $stagingDir "scripts"
+    $scriptTemplates = Join-Path $resourceScripts "templates"
 
-    New-Item -ItemType Directory -Path $assetDir, $referenceCommands, $referenceDocs, $referenceGuides, $resourceScripts -Force | Out-Null
+    New-Item -ItemType Directory -Path $referenceCommands, $referenceDocs, $referenceGuides, $scriptTemplates -Force | Out-Null
 
     Copy-Item -Path (Join-Path $pluginDir "HARNESS.md") -Destination (Join-Path $referenceDir "HARNESS.md")
     Copy-Item -Path (Join-Path $pluginDir "commands/*.md") -Destination $referenceCommands
@@ -50,12 +52,12 @@ try {
     Copy-Item -Path (Join-Path $pluginDir "repl_skin.py") -Destination (Join-Path $resourceScripts "repl_skin.py")
     Copy-Item -Path (Join-Path $pluginDir "preview_bundle.py") -Destination (Join-Path $resourceScripts "preview_bundle.py")
     Copy-Item -Path (Join-Path $pluginDir "skill_generator.py") -Destination (Join-Path $resourceScripts "skill_generator.py")
-    Copy-Item -Path (Join-Path $pluginDir "templates/*") -Destination $assetDir
+    Copy-Item -Path (Join-Path $pluginDir "templates/*") -Destination $scriptTemplates
     Copy-Item -Path $previewProtocol -Destination (Join-Path $referenceDocs "PREVIEW_PROTOCOL.md")
 
     Move-Item -Path $stagingDir -Destination $destDir
 } finally {
-    if (Test-Path $stagingDir) {
+    if ($stagingDir -and (Test-Path $stagingDir)) {
         Remove-Item -Path $stagingDir -Recurse -Force
     }
 }
