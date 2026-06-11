@@ -236,7 +236,7 @@ Give SKILL-compatible agents the CLI-Hub meta-skill so they can discover and ins
 npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
-**Works with:** OpenClaw, Nanobot, Claude Code, Codex, Antigravity, and other SKILL-compatible agents.
+**Works with:** OpenClaw, Nanobot, Claude Code, Codex, Reasonix, Antigravity, and other SKILL-compatible agents.
 
 Then prompt:
 
@@ -255,7 +255,7 @@ Use the CLI-Anything generator when you need a new harness for software, a codeb
 
 - **Python 3.10+**
 - Target software or source repo available locally or online
-- A supported AI coding agent: [Claude Code](#-claude-code) | [Pi](#-pi-coding-agent) | [OpenClaw](#-openclaw) | [OpenCode](#-opencode) | [Codex](#-codex) | [Hermes](#-hermes) | [Qodercli](#-qodercli) | [GitHub Copilot CLI](#-github-copilot-cli) | [More Platforms](#-more-platforms-coming-soon)
+- A supported AI coding agent: [Claude Code](#-claude-code) | [Pi](#-pi-coding-agent) | [OpenClaw](#-openclaw) | [OpenCode](#-opencode) | [Codex](#-codex) | [Hermes](#-hermes) | [Reasonix](#-reasonix) | [Qodercli](#-qodercli) | [GitHub Copilot CLI](#-github-copilot-cli) | [More Platforms](#-more-platforms-coming-soon)
 
 ### Pick Your Agent Platform
 
@@ -623,6 +623,48 @@ The Hermes skill adapts the same methodology used by the Claude Code plugin and
 Codex skill, binding Hermes's `terminal`, `execute_code`, `delegate_task`, and
 `read_file` / `write_file` / `patch` tools to the 7-phase harness workflow while
 keeping the generated Python harness format unchanged.
+</details>
+
+<details>
+
+<summary><h4 id="-reasonix">⚡ Reasonix <sup><code>Experimental</code></sup> <sup><code>Community</code></sup></h4></summary>
+
+**Step 1: Install the Skill**
+
+Run the bundled installer:
+
+```bash
+# Clone the repo
+git clone https://github.com/HKUDS/CLI-Anything.git
+
+# Install the skill
+bash CLI-Anything/reasonix-skill/scripts/install.sh
+```
+
+On Windows PowerShell, use:
+
+```powershell
+.\CLI-Anything\reasonix-skill\scripts\install.ps1
+```
+
+This installs the skill to Reasonix's global skill directory at `~/.reasonix/skills/cli-anything`.
+
+Restart Reasonix after installation so it is discovered.
+
+**Step 2: Use CLI-Anything from Reasonix**
+
+Describe the task in natural language, for example:
+
+```text
+Use CLI-Anything to build a harness for ./gimp
+Use CLI-Anything to refine ./shotcut for picture-in-picture workflows
+Use CLI-Anything to validate ./libreoffice
+```
+
+The Reasonix skill adapts the same methodology used by the Claude Code plugin and
+Codex/Hermes skills, binding Reasonix's `bash`, `write_file`, `edit_file`,
+`multi_edit`, `grep`, `glob`, and optional `mcp__codegraph__search` / `mcp__codegraph__context` tools to the
+7-phase harness workflow while keeping the generated Python harness format unchanged.
 </details>
 
 <details>
@@ -1371,6 +1413,7 @@ cli-anything/
 │   ├── scripts/                         # Bash and PowerShell installers
 │   └── tests/                           # Installer resource-sync regression test
 ├── 🧭 hermes-skill/                     # Hermes Agent skill entry point
+├── 🧠 reasonix-skill/                   # Reasonix skill entry point
 ├── 🎨 gimp/agent-harness/               # GIMP CLI (107 tests)
 ├── 🧊 blender/agent-harness/            # Blender CLI (208 tests)
 ├── ✏️ inkscape/agent-harness/            # Inkscape CLI (202 tests)
